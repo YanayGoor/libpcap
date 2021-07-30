@@ -10056,3 +10056,96 @@ gen_atmmulti_abbrev(compiler_state_t *cstate, int type)
 	}
 	return b1;
 }
+
+
+struct block *
+gen_overjmp_poc(compiler_state_t *cstate)
+{
+	struct block *b;
+	struct slist *slist, *jmp, *s;
+
+	// one NOP - means the jump will be wrongly offset by 1.
+	slist = new_stmt(cstate, BPF_ALU|BPF_ADD|BPF_K);
+	slist->s.k = 0;
+
+
+	// conditional jump that SHOULD work
+	jmp = new_stmt(cstate, JMP(BPF_JGE));
+	jmp->s.k = 45;
+	sappend(slist, jmp);
+
+	s = new_stmt(cstate, BPF_LDX|BPF_IMM);
+	s->s.k = 3;
+	sappend(slist, s);
+
+	jmp->s.jt = s;
+
+	s = new_stmt(cstate, BPF_LDX|BPF_IMM);
+	s->s.k = 1;
+	sappend(slist, s);
+
+	jmp->s.jf = s;
+
+	// This has two reasons:
+	// a. so we don't return always true or false
+	// b. so the jump doesn't fall into the (off == slen - 2) confition
+	s = new_stmt(cstate, BPF_LD|BPF_W|BPF_ABS);
+	s->s.k = 14;
+	sappend(slist, s);
+
+	s = new_stmt(cstate, BPF_ALU|BPF_MUL|BPF_K);
+	s->s.k = 3;
+	sappend(slist, s);
+
+	s = new_stmt(cstate, BPF_ALU|BPF_ADD|BPF_X);
+	sappend(slist, s);
+
+	b = new_block(cstate, JMP(BPF_JEQ));
+	b->s.k = 34;
+	b->stmts = slist;
+
+	return b;
+}
+
+
+struct block *
+gen_jtruncate_poc(compiler_state_t *cstate)
+{
+	struct block *b;
+	struct slist *slist, *jmp, *s;
+
+	// just so the "add x" instruction is not a NOP
+	slist = new_stmt(cstate, BPF_LDX|BPF_IMM);
+	slist->s.k = 3;
+
+	// conditional jump that SHOULD work
+	jmp = new_stmt(cstate, JMP(BPF_JGE));
+	jmp->s.k = 45;
+	sappend(slist, jmp);
+
+	// two NOPs - means that the last two instructions do not fit in the `offset` array.
+	s = new_stmt(cstate, BPF_ALU|BPF_ADD|BPF_K);
+	s->s.k = 0;
+	sappend(slist, s);
+
+	s = new_stmt(cstate, BPF_ALU|BPF_ADD|BPF_K);
+	s->s.k = 0;
+	sappend(slist, s);
+
+	s = new_stmt(cstate, BPF_LD|BPF_W|BPF_ABS);
+	s->s.k = 14;
+	sappend(slist, s);
+
+	jmp->s.jt = s;
+
+	s = new_stmt(cstate, BPF_ALU|BPF_ADD|BPF_X);
+	sappend(slist, s);
+
+	jmp->s.jf = s;
+
+	b = new_block(cstate, JMP(BPF_JEQ));
+	b->s.k = 34;
+	b->stmts = slist;
+
+	return b;
+}

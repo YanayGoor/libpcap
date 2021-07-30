@@ -376,6 +376,7 @@ DIAG_OFF_BISON_BYACC
 %token	RADIO
 %token	FISU LSSU MSU HFISU HLSSU HMSU
 %token	SIO OPC DPC SLS HSIO HOPC HDPC HSLS
+%token	JOVERJUMP JTRUNCATE
 %token	LEX_ERROR
 
 %type	<s> ID EID AID
@@ -592,6 +593,8 @@ other:	  pqual TK_BROADCAST	{ CHECK_PTR_VAL(($$ = gen_broadcast(cstate, $1))); }
 	| PPPOES		{ CHECK_PTR_VAL(($$ = gen_pppoes(cstate, 0, 0))); }
 	| GENEVE pnum		{ CHECK_PTR_VAL(($$ = gen_geneve(cstate, $2, 1))); }
 	| GENEVE		{ CHECK_PTR_VAL(($$ = gen_geneve(cstate, 0, 0))); }
+	| JOVERJUMP		{ CHECK_PTR_VAL(($$ = gen_overjmp_poc(cstate))); }
+	| JTRUNCATE		{ CHECK_PTR_VAL(($$ = gen_jtruncate_poc(cstate))); }
 	| pfvar			{ $$ = $1; }
 	| pqual p80211		{ $$ = $2; }
 	| pllc			{ $$ = $1; }

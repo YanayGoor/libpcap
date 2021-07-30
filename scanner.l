@@ -345,6 +345,9 @@ pppoed		return PPPOED;
 pppoes		return PPPOES;
 geneve		return GENEVE;
 
+joverjump		return JOVERJUMP;
+jtruncate		return JTRUNCATE;
+
 lane		return LANE;
 llc		return LLC;
 metac		return METAC;
